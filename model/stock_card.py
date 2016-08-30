@@ -3,6 +3,7 @@
 from openerp import models, fields, api, _
 import openerp.addons.decimal_precision as dp
 from openerp.exceptions import Warning as UserError
+import json
 
 
 class StockCard(models.TransientModel):
@@ -41,12 +42,16 @@ class StockCardProduct(models.TransientModel):
     @api.multi
     def stock_card_move_get(self):
         self.ensure_one()
-        if not (self.product_id.valuation == 'real_time' and
-                self.product_id.cost_method in ('average', 'real')):
-            return True
+        data = {}
+        data['product_id'] = self.product_id.id
+        # if not (self.product_id.valuation == 'real_time' and
+        #         self.product_id.cost_method in ('average', 'real')):
+        #     return True
         self.stock_card_move_ids.unlink()
         self.create_stock_card_lines(self.product_id.id)
-        return self.action_view_moves()
+        # data['stock_card_move_ids'] = json.dump(self.stock_card_move_ids, sort_keys=True)
+        # return self.action_view_moves()
+        return self.env['report'].get_action(self, 'stock_card.kardex', data=data)
 
     def _get_quant_values(self, move_id, col='', inner='', where=''):
         self._cr.execute(
@@ -369,6 +374,43 @@ class StockCardProduct(models.TransientModel):
                 _('Asked Product has not Moves to show'))
         return action
 
+    # def _stock_card_move_history_get(self, product_id):
+    #     self._cr.execute(
+    #         '''
+    #         SELECT distinct
+    #             sm.id AS move_id, sm.date, sm.product_id, prod.product_tmpl_id,
+    #             sm.product_qty, sl_src.usage AS src_usage,
+    #             sl_dst.usage AS dst_usage,
+    #             ir_prop_cost.value_text AS cost_method,
+    #             sm.date AS date
+    #         FROM stock_move AS sm
+    #         INNER JOIN
+    #             stock_location AS sl_src ON sm.location_id = sl_src.id
+    #         INNER JOIN
+    #             stock_location AS sl_dst ON sm.location_dest_id = sl_dst.id
+    #         INNER JOIN
+    #              product_product AS prod ON sm.product_id = prod.id
+    #         INNER JOIN
+    #             product_template AS ptemp ON prod.product_tmpl_id = ptemp.id
+    #         INNER JOIN
+    #             ir_property AS ir_prop_cost ON (
+    #                 ir_prop_cost.res_id = 'product.template,' ||
+    #                 ptemp.id::text and ir_prop_cost.name = 'cost_method')
+    #         WHERE
+    #             sm.state = 'done' -- Stock Move already DONE
+    #             AND ir_prop_cost.value_text = 'average' -- Average Products
+    #             AND sl_src.usage != sl_dst.usage -- No self transfers
+    #             AND (
+    #                 (sl_src.usage = 'internal' AND sl_dst.usage != 'internal')
+    #                 OR (
+    #                 sl_src.usage != 'internal' AND sl_dst.usage = 'internal')
+    #             ) -- Actual incoming or outgoing Stock Moves
+    #             AND sm.product_id = %s
+    #         ORDER BY sm.date
+    #         ''', (product_id,)
+    #     )
+    #     return self._cr.dictfetchall()
+
     def _stock_card_move_history_get(self, product_id):
         self._cr.execute(
             '''
@@ -377,7 +419,7 @@ class StockCardProduct(models.TransientModel):
                 sm.product_qty, sl_src.usage AS src_usage,
                 sl_dst.usage AS dst_usage,
                 ir_prop_cost.value_text AS cost_method,
-                sm.date AS date
+                sm.date AS date, ptemp.name
             FROM stock_move AS sm
             INNER JOIN
                 stock_location AS sl_src ON sm.location_id = sl_src.id
@@ -389,22 +431,15 @@ class StockCardProduct(models.TransientModel):
                 product_template AS ptemp ON prod.product_tmpl_id = ptemp.id
             INNER JOIN
                 ir_property AS ir_prop_cost ON (
-                    ir_prop_cost.res_id = 'product.template,' ||
-                    ptemp.id::text and ir_prop_cost.name = 'cost_method')
+                    ir_prop_cost.res_id like 'product.product,' ||
+                    prod.id::text)
             WHERE
-                sm.state = 'done' -- Stock Move already DONE
-                AND ir_prop_cost.value_text = 'average' -- Average Products
-                AND sl_src.usage != sl_dst.usage -- No self transfers
-                AND (
-                    (sl_src.usage = 'internal' AND sl_dst.usage != 'internal')
-                    OR (
-                    sl_src.usage != 'internal' AND sl_dst.usage = 'internal')
-                ) -- Actual incoming or outgoing Stock Moves
-                AND sm.product_id = %s
+                 sm.product_id = %s
             ORDER BY sm.date
             ''', (product_id,)
         )
         return self._cr.dictfetchall()
+
 
 
 class StockCardMove(models.TransientModel):
@@ -432,3 +467,29 @@ class StockCardMove(models.TransientModel):
         digits=dp.get_precision('Account'),
         readonly=True)
     date = fields.Datetime(string='Date')
+
+    ingresos = fields.Float(compute='compute_ingresos_egresos')
+    egresos = fields.Float(compute='compute_ingresos_egresos')
+    debe = fields.Float(compute='compute_debe_haber')
+    haber = fields.Float(compute='compute_debe_haber')
+
+    api.multi
+    api.depends('qty')
+    def compute_ingresos_egresos(self):
+        for record in self:
+            if record.qty > 0:
+                record.ingresos = record.qty
+            if record.move_valuation < 0:
+                record.egresos = abs(record.qty)
+            record.qty = abs(record.qty)
+
+    api.multi
+    api.depends('move_valuation')
+    def compute_debe_haber(self):
+        for record in self:
+            if record.move_valuation > 0:
+                record.debe = record.move_valuation
+                record.haber = 0
+            if record.move_valuation < 0:
+                record.haber = abs(record.move_valuation)
+                record.debe = 0

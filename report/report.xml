@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        <report
+                id="kardex_report"
+                model="stock.move"
+                string="Kardex"
+                report_type="qweb-pdf"
+                name="stock_card.kardex"
+                file="stock_card.kardex"
+                multi="False"
+        />
+
+        <record id="paper_kardex" model="report.paperformat">
+            <field name="name">Kardex A4</field>
+            <field name="default" eval="True" />
+            <field name="format">A4</field>
+            <field name="orientation">Landscape</field>
+            <field name="margin_top">35</field>
+            <field name="margin_bottom">15</field>
+            <field name="margin_left">7</field>
+            <field name="margin_right">7</field>
+            <field name="header_line" eval="False" />
+            <field name="header_spacing">35</field>
+            <field name="dpi">90</field>
+        </record>
+
+        <record id="kardex_report" model="ir.actions.report.xml">
+            <field name="paperformat_id" ref="paper_kardex"/>
+        </record>
+
+    </data>
+</openerp>

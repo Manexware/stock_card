@@ -19,6 +19,8 @@
     "data": [
         'view/view.xml',
         'view/wizard.xml',
+        'report/report.xml',
+        'report/print_kardex_report.xml'
     ],
     "installable": True,
     "auto_install": False,

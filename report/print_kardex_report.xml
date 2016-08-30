@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--Sylabus report.-->
+<openerp>
+    <data>
+        <template id="kardex">
+            <t t-call="report.html_container">
+                <t t-call="report.external_layout">
+                    <div class="page">
+                        <div class="oe_structure"/>
+                        <div class="row">
+                            <div class="col-md-12"><span class="pull-right">EMISION: <t t-usertime="%d/%m/%Y:%H:%M:%S"/></span></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12 text-center"><h3 style="margin: 0px;"><strong>KARDEX</strong></h3></div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12"><h4 style="margin: 0px;">Periodo: DEL</h4></div>
+                            <hr style="padding:0;margin-bottom: 4px; margin-top: 2px; border-top: 2px solid black;"/>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12"><h4 style="margin: 0px;"><t t-esc="product.name"/></h4></div>
+
+                        </div>
+                        <style>
+                            th{
+                                border:2px solid black;
+                                font-weight: bold;
+                                background-color: #e5e7e9;
+                                padding-left:7px;
+                                padding-right:7px;
+                                text-align: center;
+                            }
+                            td{
+                                padding-left:7px;
+                                padding-right:7px;
+                            }
+                        </style>
+                        <div class="row">
+                            <table>
+                                <th style="line-height: 20px;">FECHA</th>
+                                <th>DOCUMENTO</th>
+                                <th>ENTIDAD</th>
+                                <th>BODEGA</th>
+                                <th>UNIDAD</th>
+                                <th>CANTIDAD</th>
+                                <th>INGRESOS</th>
+                                <th>EGRESOS</th>
+                                <th>STOCK</th>
+                                <th>PRECIO</th>
+                                <th width="10px">COSTO PROMEDIO</th>
+                                <th>COSTO ORIGINAL</th>
+                                <th>DEBE</th>
+                                <th>HABER</th>
+                                <th>SALDO</th>
+                                <t t-set="ingresos" t-value="0"/>
+                                <t t-set="egresos" t-value="0"/>
+                                <t t-set="stock" t-value="0"/>
+                                <t t-set="debe" t-value="0"/>
+                                <t t-set="haber" t-value="0"/>
+                                <t t-set="saldo" t-value="0"/>
+                                <t t-foreach="stock_card_move_ids" t-as="o">
+                                    <tr>
+                                        <td><span t-field="o.date"  t-field-options='{"format": "dd/MM/YY HH:mm"}'  /></td>
+                                        <td><span t-esc="o.move_id.origin"/></td>
+                                        <td></td>
+                                        <td><span t-esc="o.move_id.location_id.name"/></td>
+                                        <td><span t-esc="o.move_id.product_uom.name"/></td>
+                                        <td style="border-right:1px solid black;text-align: right;"><span t-esc="o.qty"/></td>
+                                        <td style="text-align: right;"><span t-esc="o.ingresos"/></td>
+                                        <t t-set="ingresos" t-value="ingresos+o.ingresos"/>
+                                        <td style="text-align: right;"><span t-esc="o.egresos"/></td>
+                                        <t t-set="egresos" t-value="egresos+o.egresos"/>
+                                        <td style="border-right:1px solid black;text-align: right;"><span t-esc="o.product_qty"/></td>
+                                        <t t-set="stock" t-value="o.product_qty"/>
+                                        <td style="text-align: right;"></td>
+                                        <td style="text-align: right; background-color: #e5e7e9;"><span t-esc="o.average"/></td>
+                                        <td style="border-right:1px solid black;text-align: right ;background-color: #e5e7e9;"><span t-esc="o.cost_unit"/></td>
+                                        <td style="text-align: right;"><span t-esc="o.debe"/></td>
+                                        <t t-set="debe" t-value="debe+o.debe"/>
+                                        <td style="text-align: right;"><span t-esc="o.haber"/></td>
+                                        <t t-set="haber" t-value="haber+o.haber"/>
+                                        <td style="text-align: right;"><span t-esc="o.inventory_valuation"/></td>
+                                        <t t-set="saldo" t-value="o.inventory_valuation"/>
+                                    </tr>
+                                </t>
+                                <tr>
+                                    <td colspan="6" style="text-align: right;font-weight: bold; "><span>SALDO ACTUAL:</span></td>
+                                    <td style="border-top: 1px solid black;font-weight: bold; text-align: right;"><span t-esc="ingresos"/></td>
+                                    <td style="border-top: 1px solid black;font-weight: bold; text-align: right;"><span t-esc="egresos"/></td>
+                                    <td style="border-top: 1px solid black;font-weight: bold;text-align: right;"><span t-esc="stock"/></td>
+                                    <td style="border-top: 1px solid black;font-weight: bold;text-align: right;"></td>
+                                    <td style="border-top: 1px solid black;font-weight: bold; text-align: right;background-color: #e5e7e9;"></td>
+                                    <td style="border-top: 1px solid black;font-weight: bold; text-align: right;background-color: #e5e7e9;"></td>
+                                    <td style="border-top: 1px solid black;font-weight: bold;text-align: right;"><span t-esc="debe"/></td>
+                                    <td style="border-top: 1px solid black;font-weight: bold;text-align: right;"><span t-esc="haber"/></td>
+                                    <td style="border-top: 1px solid black;font-weight: bold;text-align: right;"><span t-esc="saldo"/></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </template>
+    </data>
+</openerp>
