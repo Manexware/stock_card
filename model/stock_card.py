@@ -17,6 +17,8 @@ class StockCardProduct(models.TransientModel):
     product_id = fields.Many2one('product.product', string='Product')
     stock_card_move_ids = fields.One2many(
         'stock.card.move', 'stock_card_product_id', 'Product Moves')
+    start_date = fields.Date(string='Inicio')
+    end_date = fields.Date(string='Fin', default=fields.date.today())
 
     def _get_fieldnames(self):
         return {

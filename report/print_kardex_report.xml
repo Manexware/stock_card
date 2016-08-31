@@ -8,9 +8,6 @@
                     <div class="page">
                         <div class="oe_structure"/>
                         <div class="row">
-                            <div class="col-md-12"><span class="pull-right">EMISION: <t t-usertime="%d/%m/%Y:%H:%M:%S"/></span></div>
-                        </div>
-                        <div class="row">
                             <div class="col-md-12 text-center"><h3 style="margin: 0px;"><strong>KARDEX</strong></h3></div>
                         </div>
                         <div class="row">
@@ -23,16 +20,16 @@
                         </div>
                         <style>
                             th{
-                                border:2px solid black;
-                                font-weight: bold;
-                                background-color: #e5e7e9;
-                                padding-left:7px;
-                                padding-right:7px;
-                                text-align: center;
+                            border:2px solid black;
+                            font-weight: bold;
+                            background-color: #e5e7e9;
+                            padding-left:7px;
+                            padding-right:7px;
+                            text-align: center;
                             }
                             td{
-                                padding-left:7px;
-                                padding-right:7px;
+                            padding-left:7px;
+                            padding-right:7px;
                             }
                         </style>
                         <div class="row">
@@ -96,6 +93,16 @@
                                     <td style="border-top: 1px solid black;font-weight: bold;text-align: right;"><span t-esc="saldo"/></td>
                                 </tr>
                             </table>
+                        </div>
+                    </div>
+                    <div class="footer">
+                        <div class="text-center" style="border-top: 1px solid black;">
+                            <ul class="list-inline">
+                                <li >Elaborado por: <span t-esc="elaborado"/></li>
+                                <li >Departamento: <span t-esc="departamento"/></li>
+                                <li >Responsable: <span t-esc="responsable"/></li>
+
+                            </ul>
                         </div>
                     </div>
                 </t>
