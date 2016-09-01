@@ -10,6 +10,22 @@ class StockCard(models.TransientModel):
     _name = 'stock.card'
     product_ids = fields.Many2many('product.product', string='Products')
 
+class StockCardWizard(models.TransientModel):
+    _name = 'stock.card.wizard'
+
+    product_ids = fields.Many2many('product.product', string='Products')
+    start_date = fields.Date(string='Inicio',default=fields.date.today(), required=True)
+    end_date = fields.Date(string='Fin', default=fields.date.today(), required=True)
+    all = fields.Boolean(string='Todos los productos')
+
+    @api.multi
+    def print_kardex(self):
+        data = {}
+        data['product_ids'] = self.product_ids.ids
+        data['start_date'] = self.start_date
+        data['end_date'] = self.end_date
+        data['all'] = self.all
+        return self.env['report'].get_action(self, 'stock_card.kardex', data=data)
 
 class StockCardProduct(models.TransientModel):
     _name = 'stock.card.product'
@@ -42,10 +58,18 @@ class StockCardProduct(models.TransientModel):
         product_obj.sudo().browse(product_id).write(field2write)
 
     @api.multi
-    def stock_card_move_get(self):
-        self.ensure_one()
+    def print_kardex(self):
         data = {}
         data['product_id'] = self.product_id.id
+        data['start_date'] = self.start_date
+        data['end_date'] = self.end_date
+        return self.env['report'].get_action(self, 'stock_card.kardex', data=data)
+
+    @api.multi
+    def stock_card_move_get(self):
+        self.ensure_one()
+        # data = {}
+        # data['product_id'] = self.product_id.id
         # if not (self.product_id.valuation == 'real_time' and
         #         self.product_id.cost_method in ('average', 'real')):
         #     return True
@@ -53,7 +77,7 @@ class StockCardProduct(models.TransientModel):
         self.create_stock_card_lines(self.product_id.id)
         # data['stock_card_move_ids'] = json.dump(self.stock_card_move_ids, sort_keys=True)
         # return self.action_view_moves()
-        return self.env['report'].get_action(self, 'stock_card.kardex', data=data)
+        # return self.env['report'].get_action(self, 'stock_card.kardex', data=data)
 
     def _get_quant_values(self, move_id, col='', inner='', where=''):
         self._cr.execute(
@@ -436,9 +460,11 @@ class StockCardProduct(models.TransientModel):
                     ir_prop_cost.res_id like 'product.product,' ||
                     prod.id::text)
             WHERE
-                 sm.product_id = %s
+                 sm.product_id = %s AND
+                 sm.date::Date >= %s AND
+                 sm.date::Date <= %s
             ORDER BY sm.date
-            ''', (product_id,)
+            ''', (product_id, self.start_date, self.end_date)
         )
         return self._cr.dictfetchall()
 
